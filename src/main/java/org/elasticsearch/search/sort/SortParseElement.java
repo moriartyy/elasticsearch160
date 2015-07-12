@@ -27,6 +27,7 @@ import org.elasticsearch.ElasticsearchIllegalArgumentException;
 import org.elasticsearch.common.Nullable;
 import org.elasticsearch.common.ParseField;
 import org.elasticsearch.common.xcontent.XContentParser;
+import org.elasticsearch.ext.multivaluenumeric.MultiValueNumericSortParser;
 import org.elasticsearch.index.cache.fixedbitset.FixedBitSetFilter;
 import org.elasticsearch.index.fielddata.IndexFieldData;
 import org.elasticsearch.index.fielddata.IndexFieldData.XFieldComparatorSource.Nested;
@@ -67,6 +68,7 @@ public class SortParseElement implements SearchParseElement {
         ImmutableMap.Builder<String, SortParser> builder = ImmutableMap.builder();
         addParser(builder, new ScriptSortParser());
         addParser(builder, new GeoDistanceSortParser());
+        addParser(builder, new MultiValueNumericSortParser());
         this.parsers = builder.build();
     }
 
