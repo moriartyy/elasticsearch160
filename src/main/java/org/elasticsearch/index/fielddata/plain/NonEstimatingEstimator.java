@@ -35,7 +35,7 @@ public class NonEstimatingEstimator implements AbstractIndexFieldData.PerValueEs
 
     private final CircuitBreaker breaker;
 
-    NonEstimatingEstimator(CircuitBreaker breaker) {
+    public NonEstimatingEstimator(CircuitBreaker breaker) {
         this.breaker = breaker;
     }
 

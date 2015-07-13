@@ -1,28 +1,10 @@
-/*
- * Licensed to Elasticsearch under one or more contributor
- * license agreements. See the NOTICE file distributed with
- * this work for additional information regarding copyright
- * ownership. Elasticsearch licenses this file to you under
- * the Apache License, Version 2.0 (the "License"); you may
- * not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing,
- * software distributed under the License is distributed on an
- * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
- * KIND, either express or implied.  See the License for the
- * specific language governing permissions and limitations
- * under the License.
- */
-
 package org.elasticsearch.ext.multivaluenumeric;
 
 import org.apache.lucene.index.AtomicReaderContext;
 import org.apache.lucene.search.FieldComparator;
 import org.apache.lucene.search.SortField;
 import org.apache.lucene.search.FieldCache.Doubles;
+import org.apache.lucene.search.FieldCache.Floats;
 import org.apache.lucene.util.FixedBitSet;
 import org.elasticsearch.ElasticsearchIllegalArgumentException;
 import org.elasticsearch.ElasticsearchParseException;
@@ -38,6 +20,8 @@ import org.elasticsearch.index.fielddata.IndexGeoPointFieldData;
 import org.elasticsearch.index.fielddata.MultiGeoPointValues;
 import org.elasticsearch.index.fielddata.NumericDoubleValues;
 import org.elasticsearch.index.fielddata.SortedNumericDoubleValues;
+import org.elasticsearch.index.fielddata.plain.ConditionalFloat.IndexConditionalFloatFieldData;
+import org.elasticsearch.index.fielddata.plain.ConditionalFloat.MultiConditionalFloatValues;
 import org.elasticsearch.index.fielddata.IndexFieldData.XFieldComparatorSource.Nested;
 import org.elasticsearch.index.mapper.FieldMapper;
 import org.elasticsearch.index.mapper.object.ObjectMapper;
@@ -52,18 +36,18 @@ import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.List;
 
-public class MultiValueNumericSortParser implements SortParser {
+public class ConditionalFloatsSortParser implements SortParser {
 
     @Override
     public String[] names() {
-        return new String[] { "_multi_value_numeric",  "_multiValueNumeric" };
+        return new String[] { "_conditional_float",  "_conditionalFloat" };
     }
 
     @Override
     public SortField parse(XContentParser parser, SearchContext context) throws Exception {
         String fieldName = null;
         boolean reverse = false;
-        BitSet flagsSet = new BitSet();
+        final BitSet flagsSet = new BitSet();
         
         XContentParser.Token token;
         String currentName = parser.currentName();
@@ -93,7 +77,7 @@ public class MultiValueNumericSortParser implements SortParser {
             throw new ElasticsearchIllegalArgumentException("failed to find mapper for [" + fieldName + "] for geo distance based sort");
         }
         
-        final IndexMultiValueNumericFieldData multiValueNumericFieldData = context.fieldData().getForField(mapper);
+        final IndexConditionalFloatFieldData multiValueNumericFieldData = context.fieldData().getForField(mapper);
 
 
         IndexFieldData.XFieldComparatorSource geoDistanceComparatorSource = new IndexFieldData.XFieldComparatorSource() {
@@ -105,19 +89,35 @@ public class MultiValueNumericSortParser implements SortParser {
 
             @Override
             public FieldComparator<?> newComparator(String fieldname, int numHits, int sortPos, boolean reversed) throws IOException {
-                return new FieldComparator.DoubleComparator(numHits, null, null, null) {
-                    @Override
-                    protected Doubles getDoubleValues(AtomicReaderContext context, String field) throws IOException {
-                        final MultiValueNumericValues multiValueNumericValues = multiValueNumericFieldData.load(context).getMultiValueNumericValues();
-                        
-                        return new Doubles() {
-                            @Override
-                            public double get(int docID) {
-                                return multiValueNumericValues.get(docID);
-                            }
-                        };
-                    }
+                return new FieldComparator.FloatComparator(numHits, null, null, null) {
+                	
+                	@Override
+                	protected Floats getFloatValues(AtomicReaderContext context, String field) throws IOException {
+                		final MultiConditionalFloatValues multiConditionalFloatValues = multiValueNumericFieldData.load(context).getConditionalFloatValues();
+                		final BitSet flags = flagsSet;
+                		return new Floats() {
+							
+							@Override
+							public float get(int docID) {
+								multiConditionalFloatValues.setDocument(docID);
+								return multiConditionalFloatValues.valueAt(0).value(flags);
+							}
+						};
+                	}
                 };
+//            	return new FieldComparator.DoubleComparator(numHits, null, null, null) {
+//                    @Override
+//                    protected Doubles getDoubleValues(AtomicReaderContext context, String field) throws IOException {
+//                        final MultiConditionalFloatValues multiConditionalFloatValues = multiValueNumericFieldData.load(context).getConditionalFloatValues();
+//                        
+//                        return new Doubles() {
+//                            @Override
+//                            public double get(int docID) {
+//                                return multiValueNumericValues.get(docID);
+//                            }
+//                        };
+//                    }
+//                };
             }
 
         };
