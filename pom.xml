@@ -79,6 +79,11 @@
             <scope>test</scope>
         </dependency>
         <dependency>
+            <groupId>mysql</groupId>
+            <artifactId>mysql-connector-java</artifactId>
+            <version>5.1.34</version>
+        </dependency>
+        <dependency>
             <groupId>org.apache.lucene</groupId>
             <artifactId>lucene-test-framework</artifactId>
             <version>${lucene.maven.version}</version>
@@ -526,7 +531,7 @@
                             <assertions>
                                 <enable/>
                                 <disable package="${tests.assertion.disabled}"/>
-                                <!-- pass org.elasticsearch to run without assertions -->
+                                pass org.elasticsearch to run without assertions
                             </assertions>
                             <parallelism>${tests.jvms}</parallelism>
                             <balancers>
@@ -559,8 +564,8 @@
                             <uniqueSuiteNames>false</uniqueSuiteNames>
                             <systemProperties>
                                 <java.io.tmpdir>.</java.io.tmpdir>
-                                <!-- we use '.' since this is different per JVM-->
-                                <!-- RandomizedTesting library system properties -->
+                                we use '.' since this is different per JVM
+                                RandomizedTesting library system properties
                                 <tests.bwc>${tests.bwc}</tests.bwc>
                                 <tests.bwc.path>${tests.bwc.path}</tests.bwc.path>
                                 <tests.bwc.version>${tests.bwc.version}</tests.bwc.version>
@@ -600,7 +605,7 @@
                                 <tests.security.manager>${tests.security.manager}</tests.security.manager>
                                 <tests.compatibility>${tests.compatibility}</tests.compatibility>
                                 <java.awt.headless>true</java.awt.headless>
-                                <!-- everything below is for security manager / test.policy -->
+                                everything below is for security manager / test.policy
                                 <junit4.tempDir>${project.build.directory}</junit4.tempDir>
                                 <java.security.policy>${basedir}/dev-tools/tests.policy</java.security.policy>
                             </systemProperties>

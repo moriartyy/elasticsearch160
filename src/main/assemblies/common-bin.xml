@@ -11,6 +11,7 @@
                 <include>com.spatial4j:spatial4j</include>
                 <include>com.vividsolutions:jts</include>
                 <include>org.codehaus.groovy:groovy-all</include>
+                <include>mysql:mysql-connector-java</include>
             </includes>
         </dependencySet>
         <dependencySet>

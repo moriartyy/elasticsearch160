@@ -1,0 +1,145 @@
+#!/bin/sh
+#
+# elasticsearch <summary>
+# description: Starts and stops a single elasticsearch instance on this system 
+#
+
+# Source function library.
+#
+if [ -f /etc/rc.d/init.d/functions ]; then
+    . /etc/rc.d/init.d/functions
+fi
+
+# Sets the default values for elasticsearch variables used in this script
+prog="hichao1_test"
+ES_USER="search"
+ES_GROUP="search"
+ES_HOME="/home/search/es/elasticsearch-1.6.0"
+#MAX_OPEN_FILES=${packaging.os.max.open.files}
+#MAX_MAP_COUNT=${packaging.os.max.map.count}
+CONF_DIR="/home/search/es/conf"
+CONF_FILE="/home/search/es/conf/${prog}.yml"
+PID_DIR="$ES_HOME"
+ES_HEAP_SIZE=10g
+#ES_HEAP_NEWSIZE=
+#ES_DIRECT_SIZE=
+#ES_JAVA_OPTS=
+
+exec="$ES_HOME/bin/elasticsearch"
+pidfile="$PID_DIR/${prog}.pid"
+
+export ES_HEAP_SIZE
+export ES_HEAP_NEWSIZE
+export ES_DIRECT_SIZE
+export ES_JAVA_OPTS
+export JAVA_HOME
+
+lockfile="$ES_HOME/${prog}.lock"
+
+checkJava() {
+    if [ -x "$JAVA_HOME/bin/java" ]; then
+        JAVA="$JAVA_HOME/bin/java"
+    else
+        JAVA=`which java`
+    fi
+
+    if [ ! -x "$JAVA" ]; then
+        echo "Could not find any executable java binary. Please install java in your PATH or set JAVA_HOME"
+        exit 1
+    fi
+}
+
+start() {
+    checkJava
+    [ -x $exec ] || exit 5
+    [ -f $CONF_FILE ] || exit 6
+    if [ -n "$MAX_LOCKED_MEMORY" -a -z "$ES_HEAP_SIZE" ]; then
+        echo "MAX_LOCKED_MEMORY is set - ES_HEAP_SIZE must also be set"
+        return 7
+    fi
+    if [ -n "$MAX_OPEN_FILES" ]; then
+        ulimit -n $MAX_OPEN_FILES
+    fi
+    if [ -n "$MAX_LOCKED_MEMORY" ]; then
+        ulimit -l $MAX_LOCKED_MEMORY
+    fi
+    if [ -n "$MAX_MAP_COUNT" -a -f /proc/sys/vm/max_map_count ]; then
+        sysctl -q -w vm.max_map_count=$MAX_MAP_COUNT
+    fi
+    if [ -n "$WORK_DIR" ]; then
+        mkdir -p "$WORK_DIR"
+        chown "$ES_USER":"$ES_GROUP" "$WORK_DIR"
+    fi
+    echo -n $"Starting $prog: "
+    # if not running, start it up here, usually something like "daemon $exec"
+    daemon --user $ES_USER --pidfile $pidfile $exec -p $pidfile -d -Des.default.path.home=$ES_HOME -Des.config=$CONF_FILE
+    retval=$?
+    echo
+    [ $retval -eq 0 ] && touch $lockfile
+    return $retval
+}
+
+stop() {
+    echo -n $"Stopping $prog: "
+    # stop it here, often "killproc $prog"
+    killproc -p $pidfile -d 20 $prog
+    retval=$?
+    echo
+    [ $retval -eq 0 ] && rm -f $lockfile
+    return $retval
+}
+
+restart() {
+    stop
+    start
+}
+
+reload() {
+    restart
+}
+
+force_reload() {
+    restart
+}
+
+rh_status() {
+    # run checks to determine if the service is running or use generic status
+    status -p $pidfile $prog
+}
+
+rh_status_q() {
+    rh_status >/dev/null 2>&1
+}
+
+
+case "$1" in
+    start)
+        rh_status_q && exit 0
+        $1
+        ;;
+    stop)
+        rh_status_q || exit 0
+        $1
+        ;;
+    restart)
+        $1
+        ;;
+    reload)
+        rh_status_q || exit 7
+        $1
+        ;;
+    force-reload)
+        force_reload
+        ;;
+    status)
+        rh_status
+        ;;
+    condrestart|try-restart)
+        rh_status_q || exit 0
+        restart
+        ;;
+    *)
+        echo $"Usage: $0 {start|stop|status|restart|condrestart|try-restart|reload|force-reload}"
+        exit 2
+esac
+exit $?

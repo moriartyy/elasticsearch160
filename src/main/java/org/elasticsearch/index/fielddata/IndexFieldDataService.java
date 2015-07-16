@@ -33,6 +33,7 @@ import org.elasticsearch.common.util.concurrent.KeyedLock;
 import org.elasticsearch.index.AbstractIndexComponent;
 import org.elasticsearch.index.Index;
 import org.elasticsearch.index.fielddata.plain.*;
+import org.elasticsearch.index.fielddata.plain.xnumeric.xfloat.XFloatArrayIndexFieldData;
 import org.elasticsearch.index.mapper.FieldMapper;
 import org.elasticsearch.index.mapper.internal.IndexFieldMapper;
 import org.elasticsearch.index.mapper.internal.ParentFieldMapper;
@@ -83,6 +84,7 @@ public class IndexFieldDataService extends AbstractIndexComponent {
                 .put(ParentFieldMapper.NAME, new ParentChildIndexFieldData.Builder())
                 .put(IndexFieldMapper.NAME, new IndexIndexFieldData.Builder())
                 .put("binary", new DisabledIndexFieldData.Builder())
+                .put("floatset", new XFloatArrayIndexFieldData.Builder())
                 .immutableMap();
 
         docValuesBuildersByType = MapBuilder.<String, IndexFieldData.Builder>newMapBuilder()

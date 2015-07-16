@@ -27,7 +27,6 @@ import org.elasticsearch.ElasticsearchIllegalArgumentException;
 import org.elasticsearch.common.Nullable;
 import org.elasticsearch.common.ParseField;
 import org.elasticsearch.common.xcontent.XContentParser;
-import org.elasticsearch.ext.multivaluenumeric.ConditionalFloatsSortParser;
 import org.elasticsearch.index.cache.fixedbitset.FixedBitSetFilter;
 import org.elasticsearch.index.fielddata.IndexFieldData;
 import org.elasticsearch.index.fielddata.IndexFieldData.XFieldComparatorSource.Nested;
@@ -42,6 +41,7 @@ import org.elasticsearch.search.SearchParseElement;
 import org.elasticsearch.search.SearchParseException;
 import org.elasticsearch.search.internal.SearchContext;
 import org.elasticsearch.search.internal.SubSearchContext;
+import org.elasticsearch.search.sort.xnumeric.XFloatSortParser;
 
 import java.io.IOException;
 import java.util.List;
@@ -68,7 +68,7 @@ public class SortParseElement implements SearchParseElement {
         ImmutableMap.Builder<String, SortParser> builder = ImmutableMap.builder();
         addParser(builder, new ScriptSortParser());
         addParser(builder, new GeoDistanceSortParser());
-        addParser(builder, new ConditionalFloatsSortParser());
+        addParser(builder, new XFloatSortParser());
         this.parsers = builder.build();
     }
 
